@@ -1,34 +1,33 @@
-import { TrendingUp, Calendar, Activity } from 'lucide-react';
+import { Calendar, TrendingUp, Activity } from 'lucide-react';
 
 const colorMap = {
   blue: {
-    bg: 'bg-card-blue',
+    bg: 'bg-[#2db2c3]',
     icon: Calendar,
   },
   green: {
-    bg: 'bg-card-green',
+    bg: 'bg-[#2ea12e]',
     icon: TrendingUp,
   },
   pink: {
-    bg: 'bg-card-pink',
+    bg: 'bg-[#cc66cc]',
     icon: Activity,
   },
 };
 
-const StatsCard = ({ label, value, subtext, color = 'blue' }) => {
+const StatsCard = ({ label, value, color = 'blue' }) => {
   const config = colorMap[color] || colorMap.blue;
   const Icon = config.icon;
 
   return (
-    <div className={`${config.bg} rounded-xl p-5 sm:p-6 text-white animate-fade-in`}>
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-white/80 text-sm font-medium">{label}</span>
-        <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
-          <Icon className="w-5 h-5 text-white" />
-        </div>
+    <div className={`${config.bg} rounded-xl p-5 text-white flex justify-between h-[115px] shadow-sm`}>
+      <div className="flex flex-col justify-between">
+        <span className="text-white/90 text-[13px] font-medium tracking-tight">{label}</span>
+        <p className="text-2xl sm:text-3xl font-bold">{value}</p>
       </div>
-      <p className="text-2xl sm:text-3xl font-bold">{value}</p>
-      <p className="text-white/70 text-sm mt-1">{subtext}</p>
+      <div>
+        <Icon className="w-8 h-8 text-white opacity-90" />
+      </div>
     </div>
   );
 };

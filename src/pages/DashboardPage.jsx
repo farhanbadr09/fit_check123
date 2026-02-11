@@ -5,19 +5,18 @@ import {
   fetchDailyBreakdown,
   setSelectedPeriod,
 } from '../store/slices/dashboardSlice';
-import Header from '../components/layout/Header';
 import StatsCard from '../components/common/StatsCard';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import {
-  BarChart,
-  Bar,
+  LineChart,
+  Line,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Legend,
 } from 'recharts';
+import { Calendar, ChevronDown } from 'lucide-react';
 
 const periodOptions = [
   { value: '7d', label: 'Last 7 Days' },
@@ -27,6 +26,7 @@ const periodOptions = [
 
 const DashboardPage = () => {
   const dispatch = useDispatch();
+  const { user } = useSelector((state) => state.auth);
   const { stats, dailyBreakdown, selectedPeriod, loading } = useSelector(
     (state) => state.dashboard
   );
@@ -36,93 +36,104 @@ const DashboardPage = () => {
     dispatch(fetchDailyBreakdown(selectedPeriod));
   }, [dispatch, selectedPeriod]);
 
-  const handlePeriodChange = (period) => {
-    dispatch(setSelectedPeriod(period));
+  const handlePeriodChange = (e) => {
+    dispatch(setSelectedPeriod(e.target.value));
   };
 
   return (
-    <div>
-      <Header title="Dashboard" subtitle="Overview of your API usage and statistics" />
+    <div className="p-6 md:p-10 animate-fade-in">
+      {/* Header Area */}
+      <div className="flex items-center justify-between mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Dashboard</h1>
 
-      <div className="p-4 sm:p-6 space-y-6">
-        {loading && !stats ? (
-          <LoadingSpinner size="lg" className="py-20" />
-        ) : (
-          <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-              {stats && (
-                <>
-                  <StatsCard {...stats.period} />
-                  <StatsCard {...stats.avgDailyRequests} />
-                  <StatsCard {...stats.totalRequests} />
-                </>
-              )}
-            </div>
-
-            <div className="bg-white rounded-xl border border-border p-4 sm:p-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-                <div>
-                  <h2 className="text-lg font-bold text-text-primary">Daily Breakdown</h2>
-                  <p className="text-sm text-text-secondary">API request volume over time</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  {periodOptions.map((opt) => (
-                    <button
-                      key={opt.value}
-                      onClick={() => handlePeriodChange(opt.value)}
-                      className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors
-                        ${
-                          selectedPeriod === opt.value
-                            ? 'bg-primary text-white'
-                            : 'bg-gray-100 text-text-secondary hover:bg-gray-200'
-                        }`}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
+        <div className="flex items-center gap-4">
+          <div className="w-10 h-10 rounded-full border border-gray-100 bg-gray-200 overflow-hidden shadow-sm">
+            {user?.avatar ? (
+              <img src={user.avatar} alt="Profile" className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-gray-800 text-white text-[10px] font-black uppercase">
+                {user?.name ? user.name.substring(0, 2) : 'JD'}
               </div>
-
-              <div className="h-[300px] sm:h-[400px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={dailyBreakdown} barGap={4}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                    <XAxis
-                      dataKey="date"
-                      tick={{ fontSize: 12, fill: '#6b7280' }}
-                      axisLine={{ stroke: '#e5e7eb' }}
-                    />
-                    <YAxis
-                      tick={{ fontSize: 12, fill: '#6b7280' }}
-                      axisLine={{ stroke: '#e5e7eb' }}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        borderRadius: '8px',
-                        border: '1px solid #e5e7eb',
-                        boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
-                      }}
-                    />
-                    <Legend />
-                    <Bar
-                      dataKey="successful"
-                      fill="#10b981"
-                      radius={[4, 4, 0, 0]}
-                      name="Successful"
-                    />
-                    <Bar
-                      dataKey="failed"
-                      fill="#ef4444"
-                      radius={[4, 4, 0, 0]}
-                      name="Failed"
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-          </>
-        )}
+            )}
+          </div>
+        </div>
       </div>
+
+      {loading && !stats ? (
+        <div className="flex justify-center py-20">
+          <LoadingSpinner />
+        </div>
+      ) : (
+        <>
+          {/* Stats Cards Row */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <StatsCard label="Period" value={stats?.period?.value || 'Last 7 Days'} color="blue" />
+            <StatsCard label="Average Daily Requests" value={stats?.avgDailyRequests?.value || '0.29'} color="green" />
+            <StatsCard label="Total Requests" value={stats?.totalRequests?.value || '2'} color="pink" />
+          </div>
+
+          {/* Graph Section */}
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6 lg:p-8">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">Daily Breakdown</h2>
+                <p className="text-sm text-gray-400 font-medium">Last 7 Days</p>
+              </div>
+
+              <div className="flex items-center gap-2 border border-blue-100 bg-blue-50/10 rounded-lg px-3 py-1.5 text-gray-600">
+                <Calendar className="w-3.5 h-3.5 text-gray-400" />
+                <select
+                  value={selectedPeriod}
+                  onChange={handlePeriodChange}
+                  className="appearance-none bg-transparent outline-none text-xs font-bold cursor-pointer"
+                >
+                  {periodOptions.map(opt => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+                <ChevronDown className="w-3 h-3 text-gray-400" />
+              </div>
+            </div>
+
+            <div className="h-[350px] w-full mt-6">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={dailyBreakdown} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                  <XAxis
+                    dataKey="date"
+                    axisLine={{ stroke: '#f0f0f0' }}
+                    tickLine={false}
+                    tick={{ fontSize: 11, fill: '#9ca3af', fontWeight: 500 }}
+                    dy={10}
+                  />
+                  <YAxis
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 11, fill: '#9ca3af', fontWeight: 500 }}
+                    dx={-10}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      borderRadius: '12px',
+                      border: '1px solid #f0f0f0',
+                      boxShadow: '0 4px 20px rgba(0,0,0,0.04)',
+                      fontSize: '12px'
+                    }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="successful"
+                    stroke="#3b82f6"
+                    strokeWidth={2.5}
+                    dot={{ fill: '#3b82f6', r: 4, strokeWidth: 2, stroke: '#3b82f6' }}
+                    activeDot={{ r: 6, strokeWidth: 0 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };
