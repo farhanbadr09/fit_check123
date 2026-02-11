@@ -5,23 +5,26 @@
   --color-primary-light: #a78bfa;
   --color-secondary: #d946ef;
 
-  --color-sidebar-bg: #111827;
-  --color-sidebar-hover: #1f2937;
+  --color-sidebar-bg: #09090b;
+  --color-sidebar-hover: #18181b;
 
-  --color-bg-main: #f9fafb;
+  --color-bg-main: #f8fafc;
   --color-bg-card: #ffffff;
+  --color-bg-dark-card: #18181b;
 
-  --color-text-main: #111827;
-  --color-text-muted: #6b7280;
-  --color-border: #e5e7eb;
+  --color-text-main: #0f172a;
+  --color-text-muted: #64748b;
+  --color-border: #e2e8f0;
 
-  /* Card Colors from user image */
-  --color-teal-card: #2db2c3;
-  --color-green-card: #2ea12e;
-  --color-purple-card: #cc66cc;
+  /* Status Colors */
+  --color-success: #10b981;
+  --color-danger: #ef4444;
+  --color-warning: #f59e0b;
+  --color-info: #3b82f6;
 
   --radius-xl: 0.75rem;
   --radius-2xl: 1rem;
+  --radius-3xl: 1.5rem;
 }
 
 @layer base {
@@ -37,15 +40,15 @@
 
 @layer utilities {
   .active-nav-item {
-    background: linear-gradient(to right, #d946ef, #a855f7);
-    @apply text-white shadow-md;
+    background: linear-gradient(135deg, #d946ef 0%, #7c3aed 100%);
+    @apply text-white shadow-lg shadow-primary/20;
   }
 }
 
 /* Custom scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
@@ -53,25 +56,27 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #e2e8f0;
+  background: #cbd5e1;
   border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #cbd5e1;
+  background: #94a3b8;
 }
 
 /* Animations for smoothness */
 @keyframes fadeIn {
   from {
     opacity: 0;
+    transform: translateY(10px);
   }
 
   to {
     opacity: 1;
+    transform: translateY(0);
   }
 }
 
 .animate-fade-in {
-  animation: fadeIn 0.4s ease-out forwards;
+  animation: fadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }

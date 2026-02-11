@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import {
   setClothImage,
@@ -7,24 +7,16 @@ import {
   generateLook,
   fetchRecentTryOns,
 } from '../store/slices/generateSlice';
-import Header from '../components/layout/Header';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import StatusBadge from '../components/common/StatusBadge';
-import { Upload, Sparkles, X, Download, RefreshCw } from 'lucide-react';
+import { Upload, Sparkles, X, Download, RefreshCw, Shirt, User, ArrowRight } from 'lucide-react';
 
-const ImageUploadBox = ({ label, image, onUpload, onClear }) => {
-  const handleDrop = useCallback(
-    (e) => {
-      e.preventDefault();
-      const file = e.dataTransfer?.files?.[0];
-      if (file && file.type.startsWith('image/')) {
-        const reader = new FileReader();
-        reader.onload = (event) => onUpload(event.target.result);
-        reader.readAsDataURL(file);
-      }
-    },
-    [onUpload]
-  );
+const CardTitle = ({ children }) => (
+  <h3 className="text-white text-base font-bold text-center mb-6">{children}</h3>
+);
+
+const UploadBox = ({ label, icon: Icon, image, onUpload, onClear, helperText }) => {
+  const fileInputRef = useRef(null);
 
   const handleFileSelect = (e) => {
     const file = e.target.files?.[0];
@@ -36,43 +28,51 @@ const ImageUploadBox = ({ label, image, onUpload, onClear }) => {
   };
 
   return (
-    <div className="flex-1">
-      <p className="text-sm font-semibold text-text-primary mb-3">{label}</p>
-      {image ? (
-        <div className="relative group rounded-xl overflow-hidden border-2 border-border h-64 sm:h-72">
-          <img src={image} alt={label} className="w-full h-full object-cover" />
-          <button
-            onClick={onClear}
-            className="absolute top-2 right-2 bg-danger text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+    <div className="bg-[#18181b] rounded-[24px] p-8 flex flex-col items-center min-h-[450px] shadow-xl border border-white/5">
+      <CardTitle>{label}</CardTitle>
+
+      <div className="flex-1 w-full flex flex-col items-center justify-center">
+        {image ? (
+          <div className="relative w-full h-full min-h-[280px] rounded-2xl overflow-hidden group">
+            <img src={image} alt={label} className="w-full h-full object-cover" />
+            <button
+              onClick={onClear}
+              className="absolute top-3 right-3 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full backdrop-blur-md transition-all opacity-0 group-hover:opacity-100"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        ) : (
+          <div
+            onClick={() => fileInputRef.current?.click()}
+            className="w-full h-full min-h-[300px] flex flex-col items-center justify-center cursor-pointer group"
           >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-      ) : (
-        <label
-          onDrop={handleDrop}
-          onDragOver={(e) => e.preventDefault()}
-          className="flex flex-col items-center justify-center h-64 sm:h-72 border-2 border-dashed border-border rounded-xl cursor-pointer hover:border-primary hover:bg-primary/5 transition-all"
-        >
-          <Upload className="w-10 h-10 text-text-muted mb-3" />
-          <p className="text-sm font-medium text-text-secondary">
-            Drag & drop or click to upload
-          </p>
-          <p className="text-xs text-text-muted mt-1">PNG, JPG up to 10MB</p>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleFileSelect}
-            className="hidden"
-          />
-        </label>
-      )}
+            <div className="w-20 h-20 rounded-full border border-white/10 flex items-center justify-center mb-6 bg-white/5 group-hover:bg-white/10 transition-all">
+              <Icon className="w-8 h-8 text-white/70" />
+            </div>
+            <p className="text-white font-medium mb-2">Upload {label.replace('Choose ', '')} Image</p>
+            {helperText && (
+              <p className="text-gray-500 text-[11px] text-center max-w-[200px] leading-relaxed px-4 mt-2">
+                {helperText}
+              </p>
+            )}
+            <input
+              type="file"
+              ref={fileInputRef}
+              accept="image/*"
+              onChange={handleFileSelect}
+              className="hidden"
+            />
+          </div>
+        )}
+      </div>
     </div>
   );
 };
 
 const GeneratePage = () => {
   const dispatch = useDispatch();
+  const { user } = useSelector((state) => state.auth);
   const { clothImage, modelImage, result, generating, recentTryOns, loading } =
     useSelector((state) => state.generate);
 
@@ -91,125 +91,135 @@ const GeneratePage = () => {
   };
 
   return (
-    <div>
-      <Header title="Generate" subtitle="Create AI-powered virtual try-ons" />
-
-      <div className="p-4 sm:p-6 space-y-6">
-        <div className="bg-white rounded-xl border border-border p-4 sm:p-6">
-          <h2 className="text-lg font-bold text-text-primary mb-6">Virtual Try-On</h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <ImageUploadBox
-              label="Upload Cloth Image"
-              image={clothImage}
-              onUpload={(img) => dispatch(setClothImage(img))}
-              onClear={() => dispatch(setClothImage(null))}
-            />
-
-            <ImageUploadBox
-              label="Upload Model Image"
-              image={modelImage}
-              onUpload={(img) => dispatch(setModelImage(img))}
-              onClear={() => dispatch(setModelImage(null))}
-            />
-
-            <div className="flex-1">
-              <p className="text-sm font-semibold text-text-primary mb-3">Generated Look</p>
-              <div className="h-64 sm:h-72 border-2 border-border rounded-xl flex items-center justify-center bg-bg-input overflow-hidden">
-                {generating ? (
-                  <div className="flex flex-col items-center gap-3">
-                    <LoadingSpinner size="lg" />
-                    <p className="text-sm text-text-secondary">Generating your look...</p>
-                  </div>
-                ) : result ? (
-                  <div className="relative group w-full h-full">
-                    <img
-                      src={result.resultImage}
-                      alt="Generated Look"
-                      className="w-full h-full object-cover"
-                    />
-                    <button className="absolute bottom-2 right-2 bg-white text-text-primary p-2 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Download className="w-4 h-4" />
-                    </button>
-                  </div>
-                ) : (
-                  <div className="text-center">
-                    <Sparkles className="w-10 h-10 text-text-muted mx-auto mb-2" />
-                    <p className="text-sm text-text-muted">
-                      Upload images and click Generate
-                    </p>
-                  </div>
-                )}
+    <div className="p-6 md:p-10 bg-[#f8fafc] min-h-screen animate-fade-in">
+      {/* Premium Header */}
+      <div className="flex items-center justify-between mb-12">
+        <div className="flex-1 text-center">
+          <h1 className="text-4xl font-extrabold text-[#111827] mb-3 tracking-tight">Generate Look</h1>
+          <p className="text-gray-500 font-medium">Select a garment and upload your photo to see how it looks on you</p>
+        </div>
+        <div className="absolute right-10 top-10">
+          <div className="w-10 h-10 rounded-full border border-gray-100 bg-gray-200 overflow-hidden shadow-sm">
+            {user?.avatar ? (
+              <img src={user.avatar} alt="Profile" className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-gray-800 text-white text-[10px] font-black uppercase">
+                {user?.name ? user.name.substring(0, 2) : 'JD'}
               </div>
-            </div>
+            )}
           </div>
+        </div>
+      </div>
 
-          <div className="flex flex-col sm:flex-row items-center gap-3 mt-6">
-            <button
-              onClick={handleGenerate}
-              disabled={!clothImage || !modelImage || generating}
-              className="w-full sm:w-auto px-6 py-3 bg-secondary hover:bg-secondary/90 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
-            >
-              <Sparkles className="w-5 h-5" />
-              {generating ? 'Generating...' : 'Generate Look'}
-            </button>
+      {/* Generation Workflow Grid */}
+      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+        <UploadBox
+          label="Choose Cloth"
+          icon={Shirt}
+          image={clothImage}
+          onUpload={(img) => dispatch(setClothImage(img))}
+          onClear={() => dispatch(setClothImage(null))}
+        />
+
+        <UploadBox
+          label="Choose Model"
+          icon={User}
+          image={modelImage}
+          onUpload={(img) => dispatch(setModelImage(img))}
+          onClear={() => dispatch(setModelImage(null))}
+          helperText="Kindly upload a high-resolution photograph (*.jpg or *.png) that presents your entire body in a well-defined pose."
+        />
+
+        <div className="bg-[#18181b] rounded-[24px] p-8 flex flex-col items-center min-h-[450px] shadow-xl border border-white/5 relative">
+          <div className="flex w-full items-center justify-between mb-6">
+            <div className="w-10" /> {/* Spacer */}
+            <h3 className="text-white text-base font-bold text-center">Final Look</h3>
             <button
               onClick={handleReset}
-              className="w-full sm:w-auto px-6 py-3 bg-gray-100 hover:bg-gray-200 text-text-secondary font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
+              className="text-gray-500 hover:text-white text-[13px] font-medium transition-colors"
             >
-              <RefreshCw className="w-4 h-4" />
               Reset
             </button>
           </div>
+
+          <div className="flex-1 w-full flex flex-col items-center justify-center">
+            <div className="w-full h-full min-h-[250px] bg-black/20 rounded-2xl border border-white/5 overflow-hidden relative group">
+              {generating ? (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm z-10">
+                  <LoadingSpinner className="text-white mb-3" />
+                  <p className="text-white text-xs font-medium">AI Magic in progress...</p>
+                </div>
+              ) : result ? (
+                <div className="w-full h-full relative">
+                  <img src={result.resultImage} alt="Final Look" className="w-full h-full object-cover" />
+                  <button className="absolute bottom-4 right-4 bg-white/20 hover:bg-white/30 text-white p-2.5 rounded-xl backdrop-blur-md transition-all shadow-lg">
+                    <Download className="w-5 h-5" />
+                  </button>
+                </div>
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center opacity-30">
+                  <Sparkles className="w-16 h-16 text-white mb-4" />
+                </div>
+              )}
+            </div>
+
+            <div className="w-full mt-8">
+              <button
+                onClick={handleGenerate}
+                disabled={!clothImage || !modelImage || generating}
+                className="w-full py-4 rounded-full bg-gradient-to-r from-[#d946ef] to-[#ba3edf] text-white font-bold text-sm tracking-wide shadow-[0_8px_25px_rgba(217,70,239,0.3)] hover:shadow-[0_8px_30px_rgba(217,70,239,0.5)] transition-all flex items-center justify-center gap-2 group disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none uppercase"
+              >
+                {generating ? 'Generating...' : 'Generate Look'}
+                {!generating && <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Recent Try-Ons Section */}
+      <div className="max-w-7xl mx-auto">
+        <div className="flex items-center justify-between mb-8">
+          <h2 className="text-2xl font-extrabold text-[#111827]">Recent Try-Ons</h2>
+          <div className="h-[1px] flex-1 mx-6 bg-gray-200" />
         </div>
 
-        <div className="bg-white rounded-xl border border-border p-4 sm:p-6">
-          <h2 className="text-lg font-bold text-text-primary mb-4">Recent Try-Ons</h2>
-
-          {loading ? (
-            <LoadingSpinner className="py-10" />
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {recentTryOns.map((tryOn) => (
-                <div
-                  key={tryOn.id}
-                  className="border border-border rounded-xl overflow-hidden hover:shadow-md transition-shadow"
-                >
-                  <div className="grid grid-cols-3 h-32">
-                    <img
-                      src={tryOn.clothImage}
-                      alt="Cloth"
-                      className="w-full h-full object-cover border-r border-border"
-                    />
-                    <img
-                      src={tryOn.modelImage}
-                      alt="Model"
-                      className="w-full h-full object-cover border-r border-border"
-                    />
-                    {tryOn.resultImage ? (
-                      <img
-                        src={tryOn.resultImage}
-                        alt="Result"
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                        <X className="w-5 h-5 text-danger" />
-                      </div>
-                    )}
-                  </div>
-                  <div className="p-3 flex items-center justify-between">
-                    <span className="text-xs text-text-muted">{tryOn.createdAt}</span>
+        {loading && recentTryOns.length === 0 ? (
+          <div className="py-20 flex justify-center">
+            <LoadingSpinner />
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
+            {recentTryOns.map((tryOn) => (
+              <div
+                key={tryOn.id}
+                className="group relative bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all border border-gray-100 p-2"
+              >
+                <div className="aspect-[3/4] rounded-xl overflow-hidden mb-3">
+                  <img
+                    src={tryOn.resultImage || tryOn.clothImage}
+                    alt="Recent Try-On"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute top-4 right-4">
                     <StatusBadge status={tryOn.status} />
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
+                <div className="px-1 flex items-center justify-between">
+                  <span className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">{tryOn.createdAt}</span>
+                  <div className="flex -space-x-2">
+                    <img src={tryOn.clothImage} alt="Input" className="w-5 h-5 rounded-full border border-white" />
+                    <img src={tryOn.modelImage} alt="Model" className="w-5 h-5 rounded-full border border-white" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
 };
 
 export default GeneratePage;
+
