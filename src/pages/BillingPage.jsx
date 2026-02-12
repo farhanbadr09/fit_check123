@@ -5,6 +5,7 @@ import StatusBadge from '../components/common/StatusBadge';
 import Pagination from '../components/common/Pagination';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import EmptyState from '../components/common/EmptyState';
+import InvoiceModal from '../components/common/InvoiceModal';
 import {
   Search,
   FileText,
@@ -73,6 +74,8 @@ const BillingPage = () => {
   const { user } = useSelector((state) => state.auth);
   const { invoices, meta, loading, filters } = useSelector((state) => state.billing);
   const [activeTab, setActiveTab] = useState('History');
+  const [selectedInvoice, setSelectedInvoice] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     dispatch(fetchInvoices(filters));
@@ -88,6 +91,16 @@ const BillingPage = () => {
 
   const handlePageChange = (page) => {
     dispatch(setFilters({ page }));
+  };
+
+  const handleViewInvoice = (invoice) => {
+    setSelectedInvoice(invoice);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedInvoice(null);
   };
 
   return (
@@ -247,7 +260,10 @@ const BillingPage = () => {
                     </td>
                     <td className="py-5 px-8 text-right">
                       <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button className="p-2 hover:bg-white hover:shadow-sm rounded-xl transition-all text-gray-400 hover:text-primary border border-transparent hover:border-gray-100">
+                        <button
+                          onClick={() => handleViewInvoice(invoice)}
+                          className="p-2 hover:bg-white hover:shadow-sm rounded-xl transition-all text-gray-400 hover:text-primary border border-transparent hover:border-gray-100"
+                        >
                           <Eye className="w-4 h-4" />
                         </button>
                         <button className="p-2 hover:bg-white hover:shadow-sm rounded-xl transition-all text-gray-400 hover:text-primary border border-transparent hover:border-gray-100">
@@ -275,6 +291,12 @@ const BillingPage = () => {
         <Clock className="w-4 h-4 text-gray-300" />
         <p className="text-[11px] font-black uppercase tracking-[0.2em] text-gray-300">Last updated today at 5:30 PM PST</p>
       </div>
+
+      <InvoiceModal
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        invoice={selectedInvoice}
+      />
     </div>
   );
 };
